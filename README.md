@@ -10,3 +10,5 @@ Golang-based tools for asciidoc.
 ## List
 
 - Find duplicate IDs in the book and resolve conflicts.
+- Generate a list of figures.
+- Generate a list of tables.

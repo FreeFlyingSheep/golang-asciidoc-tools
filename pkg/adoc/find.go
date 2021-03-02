@@ -1,6 +1,7 @@
 package adoc
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -8,10 +9,60 @@ import (
 	"strings"
 )
 
-var inc, re *regexp.Regexp
-var contents = make(map[string]int)
+// Modes
+const (
+	ID     = "id"
+	FIGURE = "figure"
+	TABLE  = "table"
+)
 
-func write(filename string, n int, s string, lines []string) error {
+var inc, id, title, figure, table *regexp.Regexp
+var contents = make(map[string]int)
+var list []string
+
+func findID(line string) string {
+	var t string
+	s := id.FindString(line)
+	if len(s) != 0 {
+		identify := s[2 : len(s)-2]
+		if _, ok := contents[identify]; !ok {
+			contents[identify] = 1
+			return t
+		}
+
+		contents[identify]++
+		t = "[[" + identify + "-" + strconv.Itoa(contents[identify]) + "]]"
+	}
+	return t
+}
+
+func findList(s1, s2, s3 string, mode string) {
+	r := id.FindString(s1)
+	if len(r) == 0 {
+		return
+	}
+	s := title.FindString(s2)
+	if len(s) == 0 {
+		return
+	}
+
+	var t string
+	switch mode {
+	case FIGURE:
+		t = figure.FindString(s3)
+	case TABLE:
+		t = table.FindString(s3)
+	}
+	if len(t) == 0 {
+		return
+	}
+
+	// len("[[") == 2, len("]]") == 2, len(".") == 1
+	t = "* <<" + r[2:len(r)-2] + "," + s[1:] + ">>"
+	list = append(list, t)
+}
+
+func writeID(filename string, n int, s string, lines []string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -33,7 +84,32 @@ func write(filename string, n int, s string, lines []string) error {
 	return nil
 }
 
-func find(filename string) error {
+func writeList(mode string) error {
+	file, err := os.Create("table-of-contents.adoc")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	switch mode {
+	case FIGURE:
+		_, err = file.WriteString("== List of figures\n\n")
+	case TABLE:
+		_, err = file.WriteString("== List of tables\n\n")
+	}
+	if err != nil {
+		return err
+	}
+
+	for _, item := range list {
+		_, err := file.WriteString(item + "\n")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func find(filename, mode string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -51,44 +127,65 @@ func find(filename string) error {
 			pos := strings.LastIndex(s, "/")
 			dir := s[9:pos]             // len("include::") == 9
 			name := s[pos+1 : len(s)-2] // len("[]") == 2
-			if err = os.Chdir(dir); err != nil {
-				return err
-			}
-			err = find(name)
+
+			curr, err := os.Getwd()
 			if err != nil {
 				return err
 			}
-			if err = os.Chdir(".."); err != nil {
+			if err = os.Chdir(dir); err != nil {
+				return err
+			}
+			err = find(name, mode)
+			if err != nil {
+				return err
+			}
+			if err = os.Chdir(curr); err != nil {
 				return err
 			}
 			continue
 		}
 
-		s = re.FindString(line)
-		if len(s) != 0 {
-			identify := s[2 : len(s)-2]
-			if _, ok := contents[identify]; !ok {
-				contents[identify] = 1
-				continue
+		switch mode {
+		case ID:
+			s = findID(line)
+			if len(s) != 0 {
+				if err = writeID(filename, n, s, lines); err != nil {
+					return err
+				}
+				// find this file again for the contents has changed
+				return find(filename, mode)
+			}
+		case FIGURE:
+			fallthrough
+		case TABLE:
+			if n >= 2 {
+				findList(lines[n-2], lines[n-1], line, mode)
 			}
 
-			contents[identify]++
-			t := "[[" + identify + "-" + strconv.Itoa(contents[identify]) + "]]"
-			if err = write(filename, n, t, lines); err != nil {
-				return err
-			}
-			// find this file again for the contents has changed
-			return find(filename)
 		}
 	}
 	return nil
 }
 
 // Find duplicate IDs in the book and resolve conflicts
-func Find(filename string) error {
+func Find(filename, mode string) error {
 	inc = regexp.MustCompile(`^include::.*\.adoc\[\]$`)
-	re = regexp.MustCompile(`^\[\[.*\]\]$`)
+	id = regexp.MustCompile(`^\[\[.*\]\]$`)
+	switch mode {
+	case ID:
+		return find(filename, mode)
+	case FIGURE:
+		title = regexp.MustCompile(`^\..*$`)
+		figure = regexp.MustCompile(`^image::.*\[\]$`)
+	case TABLE:
+		title = regexp.MustCompile(`^\..*$`)
+		table = regexp.MustCompile(`(^\|===.*$)|(^\[.*\]$)`)
+	default:
+		return fmt.Errorf("find: unknown type %s", mode)
+	}
 
-	err := find(filename)
-	return err
+	if err := find(filename, mode); err != nil {
+		return err
+	}
+	return writeList(mode)
 }

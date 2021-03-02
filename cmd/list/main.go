@@ -11,6 +11,10 @@ import (
 
 func main() {
 	filename := flag.String("f", "", "Path to the book")
+	mode := flag.String("m", "id", "Mode; "+
+		"\"id\" - find duplicate IDs in the book and resolve conflicts; "+
+		"\"figre\" - generate a list of figures; "+
+		"\"table\" - generate a list of tables")
 	flag.Parse()
 
 	if len(*filename) == 0 {
@@ -27,7 +31,7 @@ func main() {
 		}
 	}
 
-	err := adoc.Find(name)
+	err := adoc.Find(name, *mode)
 	if err != nil {
 		log.Fatalln(err)
 	}
