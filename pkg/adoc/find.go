@@ -68,9 +68,15 @@ func writeID(filename string, n int, s string, lines []string) error {
 		return err
 	}
 	defer file.Close()
+	last := len(lines) - 1
 	for i, line := range lines {
 		if i == n {
 			_, err := file.WriteString(s + "\n")
+			if err != nil {
+				return err
+			}
+		} else if i == last { // Handling the extra line at the end
+			_, err := file.WriteString(line)
 			if err != nil {
 				return err
 			}
