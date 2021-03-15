@@ -11,7 +11,10 @@ Golang-based tools for asciidoc.
 
 ### Examples of Book
 
-TODO
+```bash
+go build cmd/book/main.go
+./main.exe -f toc.txt -b name -o book
+```
 
 ## List
 
@@ -23,4 +26,7 @@ TODO
 
 ### Examples of List
 
-TODO
+```bash
+go build cmd/list/main.go
+./main.exe -f book.adoc
+```

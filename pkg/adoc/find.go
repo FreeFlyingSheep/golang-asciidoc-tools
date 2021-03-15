@@ -181,7 +181,7 @@ func Find(filename, mode string) error {
 	case ID:
 		return find(filename, mode)
 	case FIGURE:
-		title = regexp.MustCompile(`^\..*$`)
+		title = regexp.MustCompile(`^\.\S.*$`)
 		figure = regexp.MustCompile(`^image::.*\[\]$`)
 	case TABLE:
 		title = regexp.MustCompile(`^\..*$`)
