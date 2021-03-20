@@ -19,6 +19,8 @@ func main() {
 	ouput := flag.String("o", "",
 		"Output directory, if not specified, just print the table of contents")
 	book := flag.String("b", "", "Book name")
+	level := flag.Int("l", 0,
+		"The maximum number of levels of the book, \"0\" means no limit")
 	flag.Parse()
 
 	if len(*filename) == 0 {
@@ -39,7 +41,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	t, err := toc.Parse(body, *numSep, *titleSep, *book)
+	t, err := toc.Parse(body, *numSep, *titleSep, *book, *level)
 	if err != nil {
 		log.Fatalln(err)
 	}

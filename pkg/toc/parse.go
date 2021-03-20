@@ -50,10 +50,10 @@ func (x TOC) Swap(i, j int) {
 	x.Sections[i], x.Sections[j] = x.Sections[j], x.Sections[i]
 }
 
-func parseNum(s string, sep string) ([]int, error) {
+func parseNum(s string, sep string, l int) ([]int, error) {
 	var nums []int
 	parts := strings.Split(s, sep)
-	if len(parts) > MAXLEVEL { // level > MaxLevel
+	if len(parts) > l { // level > l
 		return nil, nil
 	}
 
@@ -72,7 +72,8 @@ func parseNum(s string, sep string) ([]int, error) {
 }
 
 // Parse all sections from the text
-func Parse(body []byte, NumSep, TitleSep string, book string) (*TOC, error) {
+func Parse(body []byte, NumSep, TitleSep string,
+	book string, level int) (*TOC, error) {
 	bookSection := &Section{
 		Number: []int{},
 		Title:  book,
@@ -99,15 +100,18 @@ func Parse(body []byte, NumSep, TitleSep string, book string) (*TOC, error) {
 			return nil, errors.New("toc: section number not found")
 		}
 
-		num, err := parseNum(line[:pos], NumSep)
+		if level == 0 || level > MAXLEVEL {
+			level = MAXLEVEL
+		}
+		num, err := parseNum(line[:pos], NumSep, level+1)
 		if err != nil {
 			return nil, err
 		} else if num == nil { // just ignore it
 			continue
 		}
-		level := len(num)
-		if level > toc.Level {
-			toc.Level = level
+		l := len(num)
+		if l > toc.Level {
+			toc.Level = l
 		}
 
 		title := strings.Trim(line[pos:], " ")
