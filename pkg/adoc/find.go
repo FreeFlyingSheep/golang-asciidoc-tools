@@ -90,8 +90,8 @@ func writeID(filename string, n int, s string, lines []string) error {
 	return nil
 }
 
-func writeList(mode string) error {
-	file, err := os.Create("table-of-contents.adoc")
+func writeList(mode, ouput string) error {
+	file, err := os.Create(ouput)
 	if err != nil {
 		return err
 	}
@@ -174,12 +174,25 @@ func find(filename, mode string) error {
 }
 
 // Find duplicate IDs in the book and resolve conflicts
-func Find(filename, mode string) error {
+func Find(name, mode, ouput string) error {
+	curr, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	pos := strings.LastIndex(name, "/")
+	if pos != -1 {
+		dir := name[:pos]
+		name = name[pos+1:]
+		if err := os.Chdir(dir); err != nil {
+			return err
+		}
+	}
+
 	inc = regexp.MustCompile(`^include::.*\.adoc\[\]$`)
 	id = regexp.MustCompile(`^\[\[.*\]\]$`)
 	switch mode {
 	case ID:
-		return find(filename, mode)
+		return find(name, mode)
 	case FIGURE:
 		title = regexp.MustCompile(`^\.\S.*$`)
 		figure = regexp.MustCompile(`^image::.*\[\]$`)
@@ -190,8 +203,11 @@ func Find(filename, mode string) error {
 		return fmt.Errorf("find: unknown type %s", mode)
 	}
 
-	if err := find(filename, mode); err != nil {
+	if err := find(name, mode); err != nil {
 		return err
 	}
-	return writeList(mode)
+	if err := os.Chdir(curr); err != nil {
+		return err
+	}
+	return writeList(mode, ouput)
 }
