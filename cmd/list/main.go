@@ -21,6 +21,10 @@ func main() {
 		log.Fatalf("You must specifiy a filename by \"-f\" option.")
 	}
 
+	if len(*ouput) == 0 {
+		log.Fatalf("You must specifiy a filename by \"-o\" option.")
+	}
+
 	err := adoc.Find(*filename, *mode, *ouput)
 	if err != nil {
 		log.Fatalln(err)
