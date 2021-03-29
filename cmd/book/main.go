@@ -16,6 +16,8 @@ func main() {
 		"Title separator, e.g., \" \" is a separator of \"1.1 xxx\"")
 	filename := flag.String("f", "",
 		"A text file that contains the table of contents")
+	prefix := flag.String("p", "section",
+		"The prefix added when ID is invalid")
 	ouput := flag.String("o", "",
 		"Output directory, if not specified, just print the table of contents")
 	book := flag.String("b", "", "Book name")
@@ -49,7 +51,7 @@ func main() {
 	if len(*ouput) == 0 {
 		toc.Print(t)
 	} else {
-		err = toc.Create(t, *ouput)
+		err = toc.Create(t, *prefix, *ouput)
 		if err != nil {
 			log.Fatalln(err)
 		}

@@ -28,8 +28,10 @@ func write(n int, identify, s string) error {
 }
 
 func create(n int, sections []*Section) (int, error) {
-	var err error
-	identify := id.Identify(sections[n].Title)
+	identify, err := id.Identify(sections[n].Title)
+	if err != nil {
+		return n, err
+	}
 	level := len(sections[n].Number) + 1
 	var symbol string
 	for i := 0; i < level; i++ {
@@ -47,7 +49,11 @@ func create(n int, sections []*Section) (int, error) {
 	for i < len(sections) {
 		length := len(sections[i].Number)
 		if length == level {
-			path := identify + "/" + id.Identify(sections[i].Title)
+			res, err := id.Identify(sections[i].Title)
+			if err != nil {
+				return i, err
+			}
+			path := identify + "/" + res
 			contents = fmt.Sprintf("%s\ninclude::%s.adoc[]\n", contents, path)
 			if first {
 				if err = os.Mkdir(identify, os.ModeDir); err != nil {
@@ -78,7 +84,7 @@ func create(n int, sections []*Section) (int, error) {
 }
 
 // Create files via the table of contents
-func Create(toc *TOC, output string) error {
+func Create(toc *TOC, prefix, output string) error {
 	_, err := os.Stat(output)
 	if err == nil {
 		return fmt.Errorf("toc: %s already exists", output)
@@ -91,7 +97,9 @@ func Create(toc *TOC, output string) error {
 		return err
 	}
 
-	id.Init()
+	if err = id.Init(prefix); err != nil {
+		return err
+	}
 	n, err := create(0, toc.Sections)
 	if err != nil {
 		return err
