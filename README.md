@@ -1,6 +1,6 @@
-# Golang Asciidoc Tools
+# Golang AsciiDoc Tools
 
-Golang-based tools for asciidoc.
+Golang-based tools for AsciiDoc.
 
 ## Book
 
