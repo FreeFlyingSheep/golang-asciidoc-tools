@@ -23,6 +23,7 @@ func main() {
 	book := flag.String("b", "", "Book name")
 	level := flag.Int("l", 0,
 		"The maximum number of levels of the book, \"0\" means no limit")
+	custom := flag.Bool("i", false, "Generate custom section IDs")
 	flag.Parse()
 
 	if len(*filename) == 0 {
@@ -51,7 +52,7 @@ func main() {
 	if len(*ouput) == 0 {
 		toc.Print(t)
 	} else {
-		err = toc.Create(t, *prefix, *ouput)
+		err = toc.Create(t, *custom, *prefix, *ouput)
 		if err != nil {
 			log.Fatalln(err)
 		}

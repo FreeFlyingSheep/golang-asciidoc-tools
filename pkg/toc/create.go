@@ -27,7 +27,7 @@ func write(n int, identify, s string) error {
 	return err
 }
 
-func create(n int, sections []*Section) (int, error) {
+func create(n int, sections []*Section, custom bool) (int, error) {
 	identify, err := id.Identify(sections[n].Title)
 	if err != nil {
 		return n, err
@@ -39,7 +39,7 @@ func create(n int, sections []*Section) (int, error) {
 	}
 
 	var contents string
-	if n != 0 {
+	if custom && n != 0 {
 		contents = fmt.Sprintf("[[%s]]\n", identify)
 	}
 	contents = fmt.Sprintf("%s%s %s\n", contents, symbol, sections[n].Title)
@@ -68,7 +68,7 @@ func create(n int, sections []*Section) (int, error) {
 			break
 		}
 
-		i, err = create(i, sections)
+		i, err = create(i, sections, custom)
 		if err != nil {
 			return i, err
 		}
@@ -84,7 +84,7 @@ func create(n int, sections []*Section) (int, error) {
 }
 
 // Create files via the table of contents
-func Create(toc *TOC, prefix, output string) error {
+func Create(toc *TOC, custom bool, prefix, output string) error {
 	_, err := os.Stat(output)
 	if err == nil {
 		return fmt.Errorf("toc: %s already exists", output)
@@ -100,7 +100,7 @@ func Create(toc *TOC, prefix, output string) error {
 	if err = id.Init(prefix); err != nil {
 		return err
 	}
-	n, err := create(0, toc.Sections)
+	n, err := create(0, toc.Sections, custom)
 	if err != nil {
 		return err
 	}
