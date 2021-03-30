@@ -50,7 +50,7 @@ func main() {
 	}
 
 	if len(*ouput) == 0 {
-		toc.Print(t)
+		toc.Write(os.Stdout, t)
 	} else {
 		err = toc.Create(t, *custom, *prefix, *ouput)
 		if err != nil {

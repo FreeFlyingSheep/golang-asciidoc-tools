@@ -2,6 +2,8 @@ package toc
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"sort"
 	"strconv"
 	"strings"
@@ -103,7 +105,7 @@ func Parse(body []byte, NumSep, TitleSep string,
 		if level == 0 || level > MAXLEVEL {
 			level = MAXLEVEL
 		}
-		num, err := parseNum(line[:pos], NumSep, level+1)
+		num, err := parseNum(line[:pos], NumSep, level)
 		if err != nil {
 			return nil, err
 		} else if num == nil { // just ignore it
@@ -124,4 +126,25 @@ func Parse(body []byte, NumSep, TitleSep string,
 
 	sort.Sort(toc)
 	return toc, nil
+}
+
+// Write the TOC
+func Write(out io.Writer, toc *TOC) {
+	fmt.Fprintf(out, "Level: %d\n", toc.Level)
+	fmt.Fprintf(out, "Total: %d\n", toc.Total)
+
+	for i, section := range toc.Sections {
+		length := len(section.Number) - 1
+		for j, num := range section.Number {
+			fmt.Fprintf(out, "%d", num)
+			if j != length {
+				fmt.Fprintf(out, ".")
+			}
+		}
+
+		if i != 0 {
+			fmt.Fprintf(out, " ")
+		}
+		fmt.Fprintf(out, "%s\n", section.Title)
+	}
 }
