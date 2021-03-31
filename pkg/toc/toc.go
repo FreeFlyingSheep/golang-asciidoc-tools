@@ -4,22 +4,31 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/FreeFlyingSheep/golang-asciidoc-tools/pkg/id"
 )
 
 const (
 	// MAXLEVEL means the maximum number of levels of the book
 	MAXLEVEL = 5
-	// MAXSECTION The maximum number of sections in the book
+	// MAXSECTION means the maximum number of sections in the book
 	MAXSECTION = 100000
+	// MAXNAME means the maximum length of the filename
+	MAXNAME = 255
 )
 
 // Section partition the book into a content hierarchy
 type Section struct {
-	Number []int
-	Title  string
+	Number   []int
+	Level    int
+	Title    string
+	Identify string
+	Path     string
+	Content  string
 }
 
 // TOC means table of contents
@@ -74,8 +83,7 @@ func parseNum(s string, sep string, l int) ([]int, error) {
 }
 
 // Parse all sections from the text
-func Parse(body []byte, NumSep, TitleSep string,
-	book string, level int) (*TOC, error) {
+func Parse(body, NumSep, TitleSep, book string, level int) (*TOC, error) {
 	bookSection := &Section{
 		Number: []int{},
 		Title:  book,
@@ -84,7 +92,7 @@ func Parse(body []byte, NumSep, TitleSep string,
 		Sections: []*Section{bookSection},
 	}
 
-	lines := strings.Split(string(body), "\n")
+	lines := strings.Split(body, "\n")
 	toc.Total = len(lines)
 	if toc.Total > MAXSECTION {
 		return nil, errors.New("toc: too many sections")
@@ -119,6 +127,7 @@ func Parse(body []byte, NumSep, TitleSep string,
 		title := strings.Trim(line[pos:], " ")
 		section := &Section{
 			Number: num,
+			Level:  l,
 			Title:  title,
 		}
 		toc.Sections = append(toc.Sections, section)
@@ -147,4 +156,80 @@ func Write(out io.Writer, toc *TOC) {
 		}
 		fmt.Fprintf(out, "%s\n", section.Title)
 	}
+}
+
+func makeHeader(section *Section, toc *TOC, custom bool) error {
+	identify, err := id.Identify(section.Title)
+	if err != nil {
+		return err
+	}
+	section.Identify = identify
+
+	var content string
+	if custom {
+		content = fmt.Sprintf("[[%s]]\n", section.Identify)
+	}
+
+	var symbol string
+	for i := 0; i < section.Level+1; i++ {
+		symbol += "="
+	}
+	content = fmt.Sprintf("%s%s %s\n", content, symbol, section.Title)
+	section.Content = content
+	return nil
+}
+
+func generate(toc *TOC, custom bool) error {
+	section := toc.Sections[0]
+	if err := makeHeader(section, toc, false); err != nil {
+		return err
+	}
+	parent := section
+
+	for i := 1; i < len(toc.Sections); i++ {
+		section = toc.Sections[i]
+		last := toc.Sections[i-1]
+		if err := makeHeader(section, toc, custom); err != nil {
+			return err
+		}
+
+		if section.Level > last.Level+1 {
+			return errors.New("toc: missing parent section")
+		} else if section.Level == last.Level+1 { // enter the subdirectory
+			parent = last
+		} else if section.Level < last.Level { // back to the parent directory
+			n := i
+			for n > 0 && section.Level <= toc.Sections[n].Level {
+				n--
+			}
+			parent = toc.Sections[n]
+		}
+
+		section.Path = parent.Path + "/" + parent.Identify
+		name := parent.Identify + "/" + section.Identify
+		parent.Content = fmt.Sprintf("%s\ninclude::%s.adoc[]\n", parent.Content, name)
+	}
+	return nil
+}
+
+// Generate files via the table of contents
+func Generate(toc *TOC, custom bool, prefix, output string) error {
+	_, err := os.Stat(output)
+	if err == nil {
+		return fmt.Errorf("toc: %s already exists", output)
+	}
+
+	if err := id.Init(prefix); err != nil {
+		return err
+	}
+	toc.Sections[0].Path = output // use Path as file directory for now
+	err = generate(toc, custom)
+	if err != nil {
+		return err
+	}
+
+	for _, section := range toc.Sections { // add filename to Path
+		section.Path += "/" + section.Identify + ".adoc"
+	}
+	return nil
 }

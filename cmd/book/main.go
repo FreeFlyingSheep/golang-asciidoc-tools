@@ -5,9 +5,24 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/FreeFlyingSheep/golang-asciidoc-tools/pkg/toc"
 )
+
+func create(section *toc.Section) error {
+	dir := filepath.Dir(section.Path)
+	if err := os.MkdirAll(dir, os.ModeDir); err != nil {
+		return err
+	}
+	f, err := os.Create(section.Path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.WriteString(section.Content)
+	return err
+}
 
 func main() {
 	numSep := flag.String("n", ".",
@@ -44,7 +59,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	t, err := toc.Parse(body, *numSep, *titleSep, *book, *level)
+	t, err := toc.Parse(string(body), *numSep, *titleSep, *book, *level)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -52,9 +67,13 @@ func main() {
 	if len(*ouput) == 0 {
 		toc.Write(os.Stdout, t)
 	} else {
-		err = toc.Create(t, *custom, *prefix, *ouput)
-		if err != nil {
+		if err = toc.Generate(t, *custom, *prefix, *ouput); err != nil {
 			log.Fatalln(err)
+		}
+		for _, section := range t.Sections {
+			if err = create(section); err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }

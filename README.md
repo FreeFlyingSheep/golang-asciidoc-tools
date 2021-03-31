@@ -13,7 +13,7 @@ Golang-based tools for AsciiDoc.
 
 ```bash
 go build cmd/book/main.go
-./main.exe -c -f toc.txt -b name -o book
+./main.exe -i -f toc.txt -b name -o book
 ```
 
 ## List

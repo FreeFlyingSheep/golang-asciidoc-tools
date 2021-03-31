@@ -37,8 +37,8 @@ func Identify(s string) (string, error) {
 		return prefix, fmt.Errorf("id: Init() not called or failed to initialize")
 	}
 
-	s = string(bracket.ReplaceAll([]byte(s), []byte("")))
-	s = string(invalid.ReplaceAll([]byte(s), []byte("-")))
+	s = bracket.ReplaceAllString(s, "")
+	s = invalid.ReplaceAllString(s, "-")
 
 	if len(s) == 0 {
 		return prefix, nil
@@ -49,7 +49,7 @@ func Identify(s string) (string, error) {
 		s = prefix + "-" + s
 	}
 
-	s = string(repeat.ReplaceAll([]byte(s), []byte("-"))) // handle duplicate '-'
+	s = repeat.ReplaceAllString(s, "-") // handle duplicate '-'
 
 	l := len(s)
 	if l > 1 && s[l-1] == '-' { // handle '-' at the end of the ID
