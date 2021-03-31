@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/FreeFlyingSheep/golang-asciidoc-tools/pkg/adoc"
 )
@@ -28,5 +30,23 @@ func main() {
 	err := adoc.Find(*filename, *mode, *ouput)
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	contents, err := adoc.List()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for filename, lines := range contents {
+		file, err := os.Create(filename)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer file.Close()
+		for i, line := range lines {
+			fmt.Fprintf(file, "%s", line)
+			if i != len(lines)-1 {
+				fmt.Fprintf(file, "\n")
+			}
+		}
 	}
 }
