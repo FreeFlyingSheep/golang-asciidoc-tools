@@ -1,0 +1,7 @@
+= Test
+
+[[figure]]
+.Figure
+image::dummy.png[]
+
+include::test/duplicate.adoc[]

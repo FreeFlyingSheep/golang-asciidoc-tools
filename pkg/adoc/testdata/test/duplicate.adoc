@@ -1,0 +1,11 @@
+[[duplicate]]
+== Duplicate
+
+include::duplicate/duplicate.adoc[]
+
+[[table-with-cols]]
+.Table with `cols`
+[cols="1"]
+|===
+|abc
+|===

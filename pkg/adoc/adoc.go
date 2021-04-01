@@ -83,11 +83,14 @@ func List() (map[string][]string, error) {
 	case ID:
 		return contents, nil
 	case FIGURE:
-		contents[out] = []string{"== List of figures\n"}
+		contents[out] = []string{"== List of Figures\n"}
 	case TABLE:
-		contents[out] = []string{"== List of tables\n"}
+		contents[out] = []string{"== List of Tables\n"}
 	}
-	list[len(list)-1] += "\n"
+	l := len(list)
+	if l > 0 {
+		list[l-1] += "\n"
+	}
 	contents[out] = append(contents[out], list...)
 	return contents, nil
 }
@@ -139,6 +142,10 @@ func find(path string) error {
 func Find(path, findMode, ouput string) error {
 	mode = findMode
 	out = ouput
+
+	ids = make(map[string]int)
+	contents = make(map[string][]string)
+	list = []string{}
 
 	inc = regexp.MustCompile(`^include::.*\.adoc\[\]$`)
 	id = regexp.MustCompile(`^\[\[.*\]\]$`)

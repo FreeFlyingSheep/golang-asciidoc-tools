@@ -1,0 +1,11 @@
+[[duplicate]]
+=== Duplicate2
+
+[[duplicate]]
+=== Duplicate3
+
+[[table-without-cols]]
+.Table without `cols`
+|===
+|123
+|===
