@@ -19,8 +19,8 @@ const (
 )
 
 var inc, id, title, figure, table *regexp.Regexp
-var ids = make(map[string]int)
-var contents = make(map[string][]string)
+var ids map[string]int
+var contents map[string][]string
 var list []string
 var mode string
 var out string
