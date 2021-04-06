@@ -9,6 +9,21 @@ import (
 	"github.com/FreeFlyingSheep/golang-asciidoc-tools/pkg/adoc"
 )
 
+func write(filename string, lines []string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	for i, line := range lines {
+		fmt.Fprintf(file, "%s", line)
+		if i != len(lines)-1 {
+			fmt.Fprintf(file, "\n")
+		}
+	}
+	return nil
+}
+
 func main() {
 	filename := flag.String("f", "", "Path to the book")
 	mode := flag.String("m", "id", "Mode; "+
@@ -37,16 +52,8 @@ func main() {
 		log.Fatalln(err)
 	}
 	for filename, lines := range contents {
-		file, err := os.Create(filename)
-		if err != nil {
+		if err := write(filename, lines); err != nil {
 			log.Fatalln(err)
-		}
-		defer file.Close()
-		for i, line := range lines {
-			fmt.Fprintf(file, "%s", line)
-			if i != len(lines)-1 {
-				fmt.Fprintf(file, "\n")
-			}
 		}
 	}
 }
