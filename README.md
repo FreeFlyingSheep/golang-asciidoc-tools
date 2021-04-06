@@ -30,3 +30,16 @@ go build cmd/book/main.go
 go build cmd/list/main.go
 ./main.exe -f book.adoc
 ```
+
+## Table
+
+### Features of Table
+
+- Convert a Excel table to a AsciiDoc table.
+
+### Examples of Table
+
+```bash
+go build cmd/table/main.go
+./main.exe -f table.xlsx -s "Sheet1" -o table.adoc
+```
